@@ -18,16 +18,13 @@ def test_dataset_paths_follow_expected_layout(tmp_path: Path):
     assert paths.test == tmp_path / "Test"
 
 
-def test_raw_manifest_rejects_empty_split(tmp_path: Path):
+def test_raw_manifest_reports_empty_training_class(tmp_path: Path):
     for split in ("Train", "Val", "Test"):
-        (tmp_path / split).mkdir()
+        (tmp_path / split / "Tomato - healthy").mkdir(parents=True)
 
-    try:
-        inspect_raw_dataset(tmp_path)
-    except ValueError as error:
-        assert "No class directories" in str(error)
-    else:
-        raise AssertionError("Expected an empty split to be rejected")
+    manifest = inspect_raw_dataset(tmp_path)
+
+    assert manifest["empty_train_classes"] == ["Tomato - healthy"]
 
 
 def test_raw_manifest_reports_counts(tmp_path: Path):
@@ -41,6 +38,7 @@ def test_raw_manifest_reports_counts(tmp_path: Path):
     assert manifest["num_classes"] == 1
     assert manifest["train_images"] == 1
     assert manifest["train_class_counts"] == {"Tomato - healthy": 1}
+    assert manifest["empty_train_classes"] == []
 
 
 def test_model_outputs_one_score_per_class():

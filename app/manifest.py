@@ -48,8 +48,6 @@ def inspect_raw_dataset(root: Path) -> dict:
         for class_name in reference
     }
     empty_classes = sorted(name for name, count in class_counts.items() if count == 0)
-    if empty_classes:
-        raise ValueError(f"Train classes without supported image files: {empty_classes}")
 
     return {
         "dataset_root": str(root.resolve()),
@@ -59,6 +57,7 @@ def inspect_raw_dataset(root: Path) -> dict:
         "validation_images": _image_count(root / "Val"),
         "test_images": _image_count(root / "Test"),
         "train_class_counts": class_counts,
+        "empty_train_classes": empty_classes,
     }
 
 

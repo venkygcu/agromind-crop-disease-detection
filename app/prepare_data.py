@@ -17,6 +17,11 @@ def main() -> None:
         f"Validated {manifest['num_classes']} classes: {manifest['train_images']} train / "
         f"{manifest['validation_images']} validation / {manifest['test_images']} test images"
     )
+    if manifest["empty_train_classes"]:
+        print(
+            "WARNING: training classes without accessible image files: "
+            f"{', '.join(manifest['empty_train_classes'])}"
+        )
     print(f"Manifest written to {args.output}")
 
 
