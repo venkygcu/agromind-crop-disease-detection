@@ -67,7 +67,7 @@ The interactive demo is a static browser experience at [`mockups/leaf-diagnosis-
 python -m http.server 8000 --directory mockups/leaf-diagnosis-demo
 ```
 
-Open <http://localhost:8000> in a browser. The demo does not claim to run model inference; it is a front-end workflow preview.
+Open <http://localhost:8000> in a browser. The demo only accepts original PlantVillage-style dataset filenames and rejects unrelated photos. It does not claim to run model inference; it is a front-end workflow preview.
 
 ## Architecture at a glance
 

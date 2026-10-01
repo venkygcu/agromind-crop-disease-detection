@@ -85,7 +85,7 @@
           <img id="preview" alt="Selected leaf preview"><span class="preview-label" id="fileName"></span>
           <input id="leafInput" type="file" accept="image/jpeg,image/png,image/webp" hidden>
         </label>
-        <div class="actions"><span class="formats">JPG, PNG or WEBP<br>Up to 10 MB</span><button class="analyse" id="analyseButton" disabled>Analyse leaf →</button></div>
+        <div class="actions"><span class="formats">PlantVillage leaf images only<br>JPG, PNG or WEBP · Up to 10 MB</span><button class="analyse" id="analyseButton" disabled>Analyse leaf →</button></div>
       </section>
       <section class="result-panel" aria-live="polite" aria-labelledby="result-title"><span class="eyebrow">02 / read the signs</span><h2 id="result-title">Field observation</h2>
         <div class="awaiting" id="awaiting"><div class="awaiting-art" aria-hidden="true"><svg width="56" viewBox="0 0 80 80"><path d="M13 64C15 25 43 9 70 11c-2 30-20 53-57 53Z" fill="none" stroke="#1F5B43" stroke-width="2"/><path d="M15 64C33 49 46 34 67 15" stroke="#1F5B43" stroke-width="2"/></svg></div><h3>Waiting for a leaf.</h3><p>Your observation card will appear here once a clear image is ready for analysis.</p></div>
@@ -98,7 +98,14 @@
   <script>
     const input=document.getElementById('leafInput'), zone=document.getElementById('dropZone'), preview=document.getElementById('preview'), nameTag=document.getElementById('fileName'), button=document.getElementById('analyseButton');
     const awaiting=document.getElementById('awaiting'), loader=document.getElementById('loader'), result=document.getElementById('result');
-    function choose(file){ if(!file || !file.type.startsWith('image/')) return; if(file.size>10*1024*1024){alert('Please choose an image smaller than 10 MB.');return;} const reader=new FileReader(); reader.onload=e=>{preview.src=e.target.result;preview.style.display='block';nameTag.textContent=file.name;nameTag.style.display='block';button.disabled=false;awaiting.style.display='none';result.style.display='none';};reader.readAsDataURL(file); }
+    const datasetPhotoPattern=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}___[^\\/]+\.(jpe?g|png|webp)$/i;
+    function reject(message){ button.disabled=true; preview.style.display='none'; nameTag.style.display='none'; awaiting.style.display='flex'; result.style.display='none'; alert(message); }
+    function choose(file){
+      if(!file || !file.type.startsWith('image/')){ reject('Only image files from the supplied PlantVillage dataset can be analysed.'); return; }
+      if(file.size>10*1024*1024){ reject('This image is larger than 10 MB.'); return; }
+      if(!datasetPhotoPattern.test(file.name)){ reject('Not a supplied dataset image. Choose a PlantVillage crop leaf photo with its original filename.'); return; }
+      const reader=new FileReader(); reader.onload=e=>{preview.src=e.target.result;preview.style.display='block';nameTag.textContent=file.name;nameTag.style.display='block';button.disabled=false;awaiting.style.display='none';result.style.display='none';};reader.readAsDataURL(file);
+    }
     input.addEventListener('change',e=>choose(e.target.files[0]));
     ['dragenter','dragover'].forEach(type=>zone.addEventListener(type,e=>{e.preventDefault();zone.classList.add('dragover')})); ['dragleave','drop'].forEach(type=>zone.addEventListener(type,e=>{e.preventDefault();zone.classList.remove('dragover')})); zone.addEventListener('drop',e=>choose(e.dataTransfer.files[0]));
     zone.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();input.click()}});
