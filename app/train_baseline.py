@@ -86,9 +86,12 @@ def main() -> None:
 
     set_seed(args.seed)
     paths = DatasetPaths(args.data_dir)
-    train = build_dataset(paths, "Train")
-    validation = build_dataset(paths, "Val")
-    test = build_dataset(paths, "Test")
+    try:
+        train = build_dataset(paths, "Train")
+        validation = build_dataset(paths, "Val")
+        test = build_dataset(paths, "Test")
+    except (FileNotFoundError, ValueError) as error:
+        parser.error(str(error))
     validate_splits(train, validation, test)
     train_loader = build_loader(train, args.batch_size, shuffle=True)
     val_loader = build_loader(validation, args.batch_size)

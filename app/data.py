@@ -58,6 +58,14 @@ def build_dataset(paths: DatasetPaths, split: Split) -> datasets.ImageFolder:
     dataset = datasets.ImageFolder(directory, transform=transforms_for(split))
     if not dataset.classes:
         raise ValueError(f"No class directories found in {directory}")
+    inaccessible = [path for path, _ in dataset.samples if not Path(path).is_file()]
+    if inaccessible:
+        examples = "; ".join(inaccessible[:3])
+        raise FileNotFoundError(
+            f"{split} contains {len(inaccessible)} inaccessible image files. "
+            "The dataset may contain OneDrive placeholders; make the dataset "
+            f"available offline before training. Examples: {examples}"
+        )
     return dataset
 
 
