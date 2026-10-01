@@ -59,6 +59,16 @@ This trains ResNet-18 with an ImageNet-pretrained backbone, uses `Val/` to selec
 
 See [`docs/baseline_report.md`](docs/baseline_report.md) for the benchmark definition and current run status.
 
+## Run the browser demo
+
+The interactive demo is a static browser experience at [`mockups/leaf-diagnosis-demo/index.html`](mockups/leaf-diagnosis-demo/index.html). It supports image selection, drag-and-drop preview, and a simulated result card while the trained checkpoint and API are still being completed.
+
+```powershell
+python -m http.server 8000 --directory mockups/leaf-diagnosis-demo
+```
+
+Open <http://localhost:8000> in a browser. The demo does not claim to run model inference; it is a front-end workflow preview.
+
 ## Architecture at a glance
 
 `leaf image -> RGB/224x224 transform -> ImageNet-pretrained ResNet-18 -> softmax class probabilities -> disease label + confidence -> advisory rule engine`
