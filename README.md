@@ -47,6 +47,18 @@ python -m app.prepare_data
 
 It verifies that class names and indices agree across Train, Val, and Test, then writes a reproducible manifest to `data/processed/dataset_manifest.json`. This command uses only the Python standard library, so it works before installing PyTorch.
 
+The training loader additionally requires every class to have accessible images in every split. This catches cloud-placeholder files that appear in a directory listing but cannot be read by Python.
+
+## Train and benchmark the baseline
+
+```powershell
+python -m app.train_baseline --data-dir "data/Crop Disease Detection Dataset/Plant Village Dataset"
+```
+
+This trains ResNet-18 with an ImageNet-pretrained backbone, uses `Val/` to select the best checkpoint with early stopping, and evaluates `Test/` once. It writes `artifacts/baseline/resnet18_baseline.pt`, `metrics.json`, and `baseline_report.md`. Use `--scratch` to opt out of pretrained weights, or change `--epochs`, `--batch-size`, and `--seed` for a recorded run configuration.
+
+See [`docs/baseline_report.md`](docs/baseline_report.md) for the benchmark definition and current run status.
+
 ## Architecture at a glance
 
 `leaf image -> RGB/224x224 transform -> ImageNet-pretrained ResNet-18 -> softmax class probabilities -> disease label + confidence -> advisory rule engine`

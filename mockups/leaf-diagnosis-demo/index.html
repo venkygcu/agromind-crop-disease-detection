@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AgroMind — Leaf diagnosis demo</title>
+  <style>
+    :root { --paper:#f6f1e7; --ink:#16342b; --leaf:#1f5b43; --deep:#123d2d; --mint:#ddead9; --sun:#f5b544; --clay:#c96e45; --line:#cfd6c7; --soft:#fdfaf3; }
+    * { box-sizing:border-box; }
+    body { margin:0; min-height:100vh; color:var(--ink); background:var(--paper); font-family:Arial, Helvetica, sans-serif; }
+    body::before { content:""; position:fixed; inset:0; pointer-events:none; opacity:.42; background-image:radial-gradient(#183b2c 0.5px,transparent .7px); background-size:7px 7px; mix-blend-mode:multiply; }
+    button, input { font:inherit; }
+    button:focus-visible, input:focus-visible, [tabindex]:focus-visible { outline:3px solid var(--sun); outline-offset:3px; }
+    .page { width:min(1180px, calc(100% - 36px)); margin:auto; padding:26px 0 30px; position:relative; }
+    header { display:flex; align-items:center; justify-content:space-between; padding-bottom:24px; border-bottom:1px solid rgba(22,52,43,.18); }
+    .brand { display:flex; align-items:center; gap:10px; font-size:20px; font-weight:800; letter-spacing:-.8px; }
+    .mark { width:28px; height:28px; display:grid; place-items:center; background:var(--leaf); color:var(--paper); transform:rotate(-10deg); border-radius:8px 14px 8px 14px; font-family:Georgia,serif; font-size:17px; }
+    .top-status { display:flex; gap:12px; align-items:center; font-size:13px; font-weight:700; }
+    .demo { background:#f8d68c; padding:7px 11px; border-radius:2px; color:#5a4007; }
+    .online { display:flex; align-items:center; gap:6px; color:#476158; }
+    .dot { width:8px; height:8px; border-radius:50%; background:#4d9a63; box-shadow:0 0 0 3px rgba(77,154,99,.16); }
+    .intro { padding:42px 0 28px; display:grid; grid-template-columns:1fr 290px; gap:28px; align-items:end; }
+    h1 { margin:0; max-width:670px; font:clamp(40px,6vw,75px)/.96 Georgia,serif; letter-spacing:-3px; color:var(--ink); }
+    .intro p { margin:0 0 7px; max-width:290px; font-size:15px; line-height:1.5; color:#53675f; }
+    .workbench { display:grid; grid-template-columns:1.12fr .88fr; background:var(--deep); min-height:490px; border:1px solid #0d3023; box-shadow:10px 10px 0 var(--sun); }
+    .upload-panel { padding:30px; border-right:1px solid rgba(246,241,231,.25); display:flex; flex-direction:column; }
+    .eyebrow { color:var(--sun); text-transform:uppercase; letter-spacing:1.5px; font-size:11px; font-weight:800; }
+    .upload-panel h2 { margin:9px 0 19px; color:var(--paper); font:30px/1 Georgia,serif; }
+    .drop-zone { flex:1; min-height:270px; cursor:pointer; position:relative; border:1.5px dashed rgba(246,241,231,.58); display:grid; place-items:center; overflow:hidden; transition:.2s ease; background:linear-gradient(135deg, rgba(221,234,217,.08),transparent 55%); }
+    .drop-zone:hover, .drop-zone.dragover { border-color:var(--sun); background:rgba(245,181,68,.12); }
+    .upload-instruction { text-align:center; color:var(--paper); padding:30px; }
+    .leaf-icon { width:65px; margin:0 auto 14px; display:block; }
+    .upload-instruction strong { display:block; font-family:Georgia,serif; font-size:22px; font-weight:normal; }
+    .upload-instruction span { display:block; margin-top:7px; font-size:13px; color:#c9d5cd; }
+    .browse { display:inline-block; margin-top:18px; border-bottom:2px solid var(--sun); padding-bottom:3px; font-size:13px; font-weight:bold; color:#fff5d9; }
+    #preview { display:none; position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+    .preview-label { display:none; position:absolute; left:12px; bottom:12px; z-index:2; background:rgba(18,61,45,.9); color:var(--paper); padding:8px 10px; font-size:12px; max-width:calc(100% - 24px); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .actions { display:flex; justify-content:space-between; align-items:center; margin-top:18px; gap:15px; }
+    .formats { color:#b8c9c0; font-size:12px; line-height:1.4; }
+    .analyse { cursor:pointer; border:0; padding:13px 19px; background:var(--sun); color:#24392d; font-weight:800; min-height:46px; transition:transform .15s, background .15s; }
+    .analyse:hover:not(:disabled) { transform:translate(-2px,-2px); background:#ffca55; box-shadow:3px 3px 0 #db8b20; }
+    .analyse:disabled { cursor:not-allowed; background:#879b8e; color:#e2e7e1; }
+    .result-panel { background:var(--mint); padding:30px; position:relative; overflow:hidden; }
+    .result-panel::after { content:"FIELD NOTE  /  01"; position:absolute; right:-13px; top:28px; font-size:10px; color:#6b856f; writing-mode:vertical-rl; letter-spacing:2px; }
+    .result-panel h2 { margin:8px 0 17px; font:30px/1 Georgia,serif; }
+    .awaiting { height:calc(100% - 35px); min-height:350px; display:flex; flex-direction:column; justify-content:center; align-items:flex-start; }
+    .awaiting-art { width:120px; height:120px; margin-bottom:20px; position:relative; border:1px solid #a8c2ae; border-radius:50%; display:grid; place-items:center; }
+    .awaiting-art::before { content:""; height:140px; border-left:1px dashed #799780; transform:rotate(30deg); position:absolute; }
+    .awaiting h3 { margin:0 0 8px; font:24px Georgia,serif; }
+    .awaiting p { max-width:300px; margin:0; color:#526c5b; font-size:14px; line-height:1.55; }
+    .result { display:none; animation:rise .5s ease both; }
+    .result-head { display:flex; justify-content:space-between; gap:16px; align-items:center; padding:14px 0 18px; border-top:1px solid #aac2ae; border-bottom:1px solid #aac2ae; }
+    .result h3 { margin:4px 0 0; font:25px/1 Georgia,serif; }
+    .confidence { width:74px; height:74px; flex:0 0 74px; border-radius:50%; display:grid; place-items:center; background:conic-gradient(var(--leaf) 0 337.7deg,#bfd0bd 337.7deg); position:relative; }
+    .confidence::before { content:""; position:absolute; inset:7px; border-radius:50%; background:var(--mint); }
+    .confidence b { z-index:1; font-size:14px; letter-spacing:-.5px; }
+    .severity { display:flex; align-items:center; gap:8px; margin:17px 0; font-size:12px; font-weight:bold; }
+    .severity i { display:inline-flex; gap:3px; }
+    .severity i span { width:21px; height:6px; background:#d1d9c9; } .severity i span:nth-child(-n+2) { background:var(--clay); }
+    .signals { padding:14px 0; border-top:1px solid #aac2ae; border-bottom:1px solid #aac2ae; }
+    .signals b, .next b { text-transform:uppercase; letter-spacing:1.2px; font-size:10px; }
+    .signals ul { margin:9px 0 0; padding:0; list-style:none; font-size:13px; line-height:1.6; }
+    .signals li::before { content:"↗"; color:var(--leaf); font-weight:bold; margin-right:8px; }
+    .next { padding:14px; margin-top:14px; background:#f7e2a7; border-left:4px solid var(--sun); font-size:13px; line-height:1.45; }
+    .next p { margin:5px 0 0; }
+    .caveat { margin:12px 0 0; font-size:11px; line-height:1.35; color:#526c5b; }
+    .loader { display:none; height:calc(100% - 35px); min-height:350px; align-items:center; justify-content:center; flex-direction:column; text-align:center; }
+    .spinner { width:52px; height:52px; border:5px solid #b5cdb8; border-top-color:var(--leaf); border-radius:50%; animation:spin .8s linear infinite; }
+    .loader p { font:20px Georgia,serif; margin:15px 0 0; }
+    .steps { display:grid; grid-template-columns:repeat(3,1fr); margin-top:50px; border-top:1px solid var(--ink); }
+    .step { padding:17px 18px 4px 0; border-right:1px solid rgba(22,52,43,.22); } .step:not(:first-child) { padding-left:18px; } .step:last-child{border:0;}
+    .step-no { color:var(--clay); font:12px Georgia,serif; } .step h4 { margin:4px 0; font:22px Georgia,serif; } .step p { max-width:250px; margin:0; color:#53675f; font-size:12px; line-height:1.45; }
+    @keyframes spin { to { transform:rotate(360deg); } } @keyframes rise { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:none; } }
+    @media (max-width:720px) { .page{width:min(100% - 26px,600px);padding-top:17px}.intro{grid-template-columns:1fr;padding:32px 0 25px;gap:12px}h1{font-size:47px;letter-spacing:-2px}.workbench{grid-template-columns:1fr;box-shadow:6px 6px 0 var(--sun)}.upload-panel,.result-panel{padding:23px}.upload-panel{border-right:0;border-bottom:1px solid rgba(246,241,231,.25)}.drop-zone{min-height:240px}.result-panel::after{display:none}.awaiting,.loader{min-height:230px}.steps{margin-top:36px}.step{padding:14px 8px 3px 0}.step:not(:first-child){padding-left:9px}.step h4{font-size:18px}.step p{font-size:11px}.top-status .online{display:none} }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header><div class="brand"><span class="mark">A</span>AgroMind</div><div class="top-status"><span class="demo">Demo mode</span><span class="online"><i class="dot"></i>Ready to inspect</span></div></header>
+    <section class="intro"><h1>Know what your crop<br>is telling you.</h1><p>Upload one clear leaf photo. AgroMind surfaces likely signals so you can decide what to inspect next.</p></section>
+    <section class="workbench" aria-label="Leaf diagnosis workbench">
+      <section class="upload-panel" aria-labelledby="upload-title"><span class="eyebrow">01 / observe</span><h2 id="upload-title">Bring the leaf into view.</h2>
+        <label class="drop-zone" id="dropZone" for="leafInput" tabindex="0" role="button" aria-label="Choose a leaf photo or drop one here">
+          <div class="upload-instruction"><svg class="leaf-icon" viewBox="0 0 80 80" aria-hidden="true"><path d="M13 64C15 25 43 9 70 11c-2 30-20 53-57 53Z" fill="none" stroke="#F5B544" stroke-width="2"/><path d="M15 64C33 49 46 34 67 15M36 43l2 13m9-22 12 2" stroke="#F5B544" stroke-width="2" fill="none"/></svg><strong>Drop a leaf photo here</strong><span>Good light. One leaf. Little background clutter.</span><em class="browse">Browse from device</em></div>
+          <img id="preview" alt="Selected leaf preview"><span class="preview-label" id="fileName"></span>
+          <input id="leafInput" type="file" accept="image/jpeg,image/png,image/webp" hidden>
+        </label>
+        <div class="actions"><span class="formats">JPG, PNG or WEBP<br>Up to 10 MB</span><button class="analyse" id="analyseButton" disabled>Analyse leaf →</button></div>
+      </section>
+      <section class="result-panel" aria-live="polite" aria-labelledby="result-title"><span class="eyebrow">02 / read the signs</span><h2 id="result-title">Field observation</h2>
+        <div class="awaiting" id="awaiting"><div class="awaiting-art" aria-hidden="true"><svg width="56" viewBox="0 0 80 80"><path d="M13 64C15 25 43 9 70 11c-2 30-20 53-57 53Z" fill="none" stroke="#1F5B43" stroke-width="2"/><path d="M15 64C33 49 46 34 67 15" stroke="#1F5B43" stroke-width="2"/></svg></div><h3>Waiting for a leaf.</h3><p>Your observation card will appear here once a clear image is ready for analysis.</p></div>
+        <div class="loader" id="loader"><div class="spinner"></div><p>Reading visual signals…</p></div>
+        <article class="result" id="result"><div class="result-head"><div><span class="eyebrow" style="color:#617b69">Most likely finding</span><h3>Tomato —<br>Early blight</h3></div><div class="confidence" aria-label="93.8 percent confidence"><b>93.8%</b></div></div><div class="severity"><span>Severity: early–moderate</span><i aria-label="two out of three"><span></span><span></span><span></span></i></div><div class="signals"><b>Visible cues</b><ul><li>Dark, ringed spots on older foliage</li><li>Yellowing surrounding lesion edges</li></ul></div><div class="next"><b>Recommended next step</b><p>Inspect lower leaves across several plants. Remove heavily affected foliage and verify local treatment guidance before spraying.</p></div><p class="caveat">Verify before treatment. This is a visual estimate, not a field diagnosis; lighting, variety and look-alike conditions can change confidence.</p></article>
+      </section>
+    </section>
+    <section class="steps" aria-label="How this demo works"><article class="step"><span class="step-no">01</span><h4>Capture</h4><p>Take a close, well-lit photo of a single affected leaf.</p></article><article class="step"><span class="step-no">02</span><h4>Analyse</h4><p>We compare visible patterns to known crop disease signals.</p></article><article class="step"><span class="step-no">03</span><h4>Act</h4><p>Use the finding to guide a closer field check with an advisor.</p></article></section>
+  </main>
+  <script>
+    const input=document.getElementById('leafInput'), zone=document.getElementById('dropZone'), preview=document.getElementById('preview'), nameTag=document.getElementById('fileName'), button=document.getElementById('analyseButton');
+    const awaiting=document.getElementById('awaiting'), loader=document.getElementById('loader'), result=document.getElementById('result');
+    function choose(file){ if(!file || !file.type.startsWith('image/')) return; if(file.size>10*1024*1024){alert('Please choose an image smaller than 10 MB.');return;} const reader=new FileReader(); reader.onload=e=>{preview.src=e.target.result;preview.style.display='block';nameTag.textContent=file.name;nameTag.style.display='block';button.disabled=false;awaiting.style.display='none';result.style.display='none';};reader.readAsDataURL(file); }
+    input.addEventListener('change',e=>choose(e.target.files[0]));
+    ['dragenter','dragover'].forEach(type=>zone.addEventListener(type,e=>{e.preventDefault();zone.classList.add('dragover')})); ['dragleave','drop'].forEach(type=>zone.addEventListener(type,e=>{e.preventDefault();zone.classList.remove('dragover')})); zone.addEventListener('drop',e=>choose(e.dataTransfer.files[0]));
+    zone.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();input.click()}});
+    button.addEventListener('click',()=>{button.disabled=true;loader.style.display='flex';result.style.display='none';setTimeout(()=>{loader.style.display='none';result.style.display='block';button.disabled=false;button.textContent='Analyse again →';},1150)});
+  </script>
+</body>
+</html>

@@ -55,7 +55,30 @@ def build_dataset(paths: DatasetPaths, split: Split) -> datasets.ImageFolder:
     directory = directories[split]
     if not directory.is_dir():
         raise FileNotFoundError(f"Expected {split} directory at: {directory}")
-    return datasets.ImageFolder(directory, transform=transforms_for(split))
+    dataset = datasets.ImageFolder(directory, transform=transforms_for(split))
+    if not dataset.classes:
+        raise ValueError(f"No class directories found in {directory}")
+    return dataset
+
+
+def validate_splits(train: datasets.ImageFolder, validation: datasets.ImageFolder,
+                    test: datasets.ImageFolder) -> None:
+    """Require the same ordered class mapping and non-empty classes in every split."""
+    for split_name, dataset in (("Val", validation), ("Test", test)):
+        if train.classes != dataset.classes or train.class_to_idx != dataset.class_to_idx:
+            train_only = sorted(set(train.classes) - set(dataset.classes))
+            split_only = sorted(set(dataset.classes) - set(train.classes))
+            raise ValueError(
+                f"Class mismatch for {split_name}. Train-only: {train_only}; "
+                f"{split_name}-only: {split_only}"
+            )
+    for split_name, dataset in (("Train", train), ("Val", validation), ("Test", test)):
+        counts = [0] * len(train.classes)
+        for _, target in dataset.samples:
+            counts[target] += 1
+        empty = [train.classes[index] for index, count in enumerate(counts) if not count]
+        if empty:
+            raise ValueError(f"{split_name} has classes with no readable images: {empty}")
 
 
 def build_loader(dataset: datasets.ImageFolder, batch_size: int = 32,
@@ -70,14 +93,7 @@ def inspect_dataset(root: Path) -> dict:
     train = build_dataset(paths, "Train")
     validation = build_dataset(paths, "Val")
     test = build_dataset(paths, "Test")
-    for split_name, split_dataset in (("Val", validation), ("Test", test)):
-        if train.classes != split_dataset.classes:
-            only_train = sorted(set(train.classes) - set(split_dataset.classes))
-            only_split = sorted(set(split_dataset.classes) - set(train.classes))
-            raise ValueError(
-                f"Class mismatch for {split_name}. "
-                f"Train-only: {only_train}; {split_name}-only: {only_split}"
-            )
+    validate_splits(train, validation, test)
     counts = {name: sum(label == index for _, label in train.samples)
               for index, name in enumerate(train.classes)}
     return {"dataset_root": str(root.resolve()), "num_classes": len(train.classes),
